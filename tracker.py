@@ -43,3 +43,20 @@ print("Valeur totale du portefeuille :", round(valeur_totale, 2), "€")
 repartition = portefeuille.groupby("compte")["valeur_ligne"].sum()
 print()
 print(repartition)
+# 7. Ajouter la plus/moins-value en euros (pas juste en %)
+portefeuille["plus_moins_value_eur"] = round(
+    (portefeuille["cours_actuel_eur"] - portefeuille["pru"]) * portefeuille["quantite"], 2
+)
+
+print()
+print(portefeuille[["ticker", "nom", "compte", "valeur_ligne", "performance_pct", "plus_moins_value_eur"]])
+
+# 8. Exporter le résultat dans un nouveau fichier CSV, horodaté
+from datetime import datetime
+
+date_du_jour = datetime.now().strftime("%Y-%m-%d_%Hh%M")
+nom_fichier_export = f"export_{date_du_jour}.csv"
+
+portefeuille.to_csv(nom_fichier_export, index=False)
+print()
+print("Export sauvegardé dans :", nom_fichier_export)
