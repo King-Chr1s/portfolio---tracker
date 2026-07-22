@@ -1,0 +1,9 @@
+# Exports générés automatiquement par le tracker
+export_*.csv
+
+# Fichiers Python compilés
+__pycache__/
+*.pyc
+
+# Fichiers macOS
+.DS_Store
