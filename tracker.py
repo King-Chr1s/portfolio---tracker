@@ -1,3 +1,7 @@
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
 import pandas as pd
 import yfinance as yf
 from datetime import datetime
@@ -69,3 +73,16 @@ print(repartition)
 nom_export = exporter_csv(portefeuille)
 print()
 print("Export sauvegardé dans :", nom_export)
+import matplotlib.pyplot as plt
+
+def generer_graphique(portefeuille):
+    plt.figure(figsize=(8, 5))
+    plt.bar(portefeuille["ticker"], portefeuille["performance_pct"])
+    plt.axhline(0, color="black", linewidth=0.8)
+    plt.xticks(rotation=45, ha="right")
+    plt.ylabel("Performance (%)")
+    plt.title("Performance par ligne du portefeuille")
+    plt.tight_layout()
+    plt.savefig("performance_graphique.png")
+    print("Graphique sauvegardé dans : performance_graphique.png")
+generer_graphique(portefeuille)
