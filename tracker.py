@@ -11,16 +11,25 @@ def charger_portefeuille(chemin_csv):
     return pd.read_csv(chemin_csv)
 
 
-def recuperer_taux_change():
-    taux_change = yf.Ticker("EURUSD=X")
-    return taux_change.history(period="1d")["Close"].iloc[-1]
+def obtenir_taux_change(devise):
+    """Retourne le taux de change EUR -> devise (combien de `devise` pour 1 euro)."""
+    if devise == "EUR":
+        return 1
+    taux = yf.Ticker(f"EUR{devise}=X")
+    return taux.history(period="1d")["Close"].iloc[-1]
 
 
-def recuperer_cours(ticker, devise, eurusd):
+def convertir_en_eur(cours_natif, taux_change):
+    """Convertit un cours exprimé dans une devise en euros, via le taux de change fourni."""
+    return cours_natif / taux_change
+
+
+def recuperer_cours(ticker, devise, taux_par_devise):
     try:
         action = yf.Ticker(ticker)
         cours_natif = action.history(period="1d")["Close"].iloc[-1]
-        return cours_natif / eurusd if devise == "USD" else cours_natif
+        taux = taux_par_devise[devise]
+        return convertir_en_eur(cours_natif, taux)
     except Exception as erreur:
         print(f"⚠️ Problème avec {ticker} : {erreur}")
         return None
@@ -48,15 +57,18 @@ def exporter_csv(portefeuille):
 
 portefeuille = charger_portefeuille("portefeuille.csv")
 
-eurusd = recuperer_taux_change()
-print("Taux EUR/USD actuel :", round(eurusd, 4))
+devises_utilisees = portefeuille["devise"].unique()
+taux_par_devise = {devise: obtenir_taux_change(devise) for devise in devises_utilisees}
+
+print("Taux de change (EUR -> devise) :", taux_par_devise)
 
 cours_actuels_eur = []
 for index, ligne in portefeuille.iterrows():
-    cours = recuperer_cours(ligne["ticker"], ligne["devise"], eurusd)
+    cours = recuperer_cours(ligne["ticker"], ligne["devise"], taux_par_devise)
     cours_actuels_eur.append(cours)
 
 portefeuille["cours_actuel_eur"] = cours_actuels_eur
+
 portefeuille = calculer_performances(portefeuille)
 
 print()
