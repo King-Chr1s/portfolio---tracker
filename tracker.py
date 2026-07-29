@@ -1,11 +1,15 @@
+import os
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-
 import pandas as pd
 import yfinance as yf
 from datetime import datetime
 
+
+# ============================================================
+# FONCTIONS
+# ============================================================
 
 def charger_portefeuille(chemin_csv):
     return pd.read_csv(chemin_csv)
@@ -20,7 +24,7 @@ def obtenir_taux_change(devise):
 
 
 def convertir_en_eur(cours_natif, taux_change):
-    """Convertit un cours exprimé dans une devise en euros, via le taux de change fourni."""
+    """Convertit un cours exprimé dans une devise en euros."""
     return cours_natif / taux_change
 
 
@@ -51,6 +55,19 @@ def exporter_csv(portefeuille):
     nom_fichier = f"export_{date_du_jour}.csv"
     portefeuille.to_csv(nom_fichier, index=False)
     return nom_fichier
+
+
+def generer_graphique(portefeuille):
+    plt.figure(figsize=(8, 5))
+    plt.bar(portefeuille["ticker"], portefeuille["performance_pct"])
+    plt.axhline(0, color="black", linewidth=0.8)
+    plt.xticks(rotation=45, ha="right")
+    plt.ylabel("Performance (%)")
+    plt.title("Performance par ligne du portefeuille")
+    plt.tight_layout()
+    plt.savefig("performance_graphique.png")
+    print("Graphique sauvegardé dans : performance_graphique.png")
+
 
 def generer_html(portefeuille, valeur_totale, repartition):
     """Génère une page HTML affichant les résultats du tracker."""
@@ -101,13 +118,56 @@ def generer_html(portefeuille, valeur_totale, repartition):
 
     print("Page HTML générée : rapport.html")
 
-# --- Programme principal ---
+
+def enregistrer_historique(valeur_totale, repartition):
+    """Ajoute une ligne d'historique dans un fichier CSV cumulatif."""
+    fichier_historique = "historique_valeur.csv"
+    date_du_jour = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+    nouvelle_ligne = pd.DataFrame([{
+        "date": date_du_jour,
+        "valeur_totale": round(valeur_totale, 2),
+        "cto": round(repartition.get("CTO", 0), 2),
+        "pea": round(repartition.get("PEA", 0), 2)
+    }])
+
+    if os.path.exists(fichier_historique):
+        historique = pd.read_csv(fichier_historique)
+        historique = pd.concat([historique, nouvelle_ligne], ignore_index=True)
+    else:
+        historique = nouvelle_ligne
+
+    historique.to_csv(fichier_historique, index=False)
+    return historique
+
+
+def generer_graphique_historique(historique):
+    """Trace l'évolution de la valeur totale du portefeuille dans le temps."""
+    if len(historique) < 2:
+        print("Pas assez de points d'historique pour tracer un graphique (relance le tracker plusieurs fois).")
+        return
+
+    plt.figure(figsize=(9, 5))
+    plt.plot(historique["date"], historique["valeur_totale"], marker="o", label="Total")
+    plt.plot(historique["date"], historique["cto"], marker="o", label="CTO")
+    plt.plot(historique["date"], historique["pea"], marker="o", label="PEA")
+    plt.xticks(rotation=45, ha="right")
+    plt.ylabel("Valeur (€)")
+    plt.title("Évolution de la valeur du portefeuille")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig("historique_graphique.png")
+    print("Graphique d'historique sauvegardé dans : historique_graphique.png")
+
+
+# ============================================================
+# PROGRAMME PRINCIPAL
+# ============================================================
 
 portefeuille = charger_portefeuille("portefeuille.csv")
 
 devises_utilisees = portefeuille["devise"].unique()
 taux_par_devise = {devise: obtenir_taux_change(devise) for devise in devises_utilisees}
-
 print("Taux de change (EUR -> devise) :", taux_par_devise)
 
 cours_actuels_eur = []
@@ -116,7 +176,6 @@ for index, ligne in portefeuille.iterrows():
     cours_actuels_eur.append(cours)
 
 portefeuille["cours_actuel_eur"] = cours_actuels_eur
-
 portefeuille = calculer_performances(portefeuille)
 
 print()
@@ -130,21 +189,11 @@ repartition = portefeuille.groupby("compte")["valeur_ligne"].sum()
 print()
 print(repartition)
 
+generer_graphique(portefeuille)
 generer_html(portefeuille, valeur_totale, repartition)
+historique = enregistrer_historique(valeur_totale, repartition)
+generer_graphique_historique(historique)
 
 nom_export = exporter_csv(portefeuille)
 print()
 print("Export sauvegardé dans :", nom_export)
-import matplotlib.pyplot as plt
-
-def generer_graphique(portefeuille):
-    plt.figure(figsize=(8, 5))
-    plt.bar(portefeuille["ticker"], portefeuille["performance_pct"])
-    plt.axhline(0, color="black", linewidth=0.8)
-    plt.xticks(rotation=45, ha="right")
-    plt.ylabel("Performance (%)")
-    plt.title("Performance par ligne du portefeuille")
-    plt.tight_layout()
-    plt.savefig("performance_graphique.png")
-    print("Graphique sauvegardé dans : performance_graphique.png")
-generer_graphique(portefeuille)
