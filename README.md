@@ -78,3 +78,27 @@ Résultats produits : comparaison chiffrée dans le terminal, `dca_comparaison.p
 ## Notes
 
 Projet réalisé dans le cadre d'un apprentissage progressif de Python, pandas, Git/GitHub et des bonnes pratiques de développement (gestion d'erreurs, structuration en fonctions, branches Git).
+
+
+## Routine hebdomadaire recommandée
+
+Pour garder un suivi utile dans le temps, relancer le tracker une fois par semaine :
+
+1. Se placer dans le dossier du projet :
+```bash
+   cd portfolio-tracker
+```
+
+2. Lancer le tracker :
+```bash
+   python3 tracker.py
+```
+
+3. Consulter les résultats (au choix) :
+```bash
+   open rapport.html              # tableau détaillé, coloré
+   open performance_graphique.png # performance par ligne
+   open historique_graphique.png  # évolution de la valeur dans le temps
+```
+
+Une seule commande (`python3 tracker.py`) suffit à tout faire : récupération des cours, calculs, graphiques, export CSV, et mise à jour de l'historique.
