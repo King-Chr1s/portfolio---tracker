@@ -1,5 +1,6 @@
 import yfinance as yf
 import pandas as pd
+import json
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -38,7 +39,6 @@ def simuler_dca(ticker, montant_mensuel, periode="2y"):
 
 
 def simuler_investissement_unique(ticker, montant_total, periode="2y"):
-    """Simule un investissement de tout le montant en une seule fois, au début de la période."""
     cours_mensuels = recuperer_historique_mensuel(ticker, periode)
     premier_cours = cours_mensuels.iloc[0]
     dernier_cours = cours_mensuels.iloc[-1]
@@ -79,9 +79,12 @@ def generer_graphique_comparaison(resultats):
 
 # --- Programme principal ---
 
-tickers_a_comparer = ["MSFT", "GOOGL", "NOW"]
-montant_mensuel = 100
-periode = "2y"
+with open("config_dca.json", "r", encoding="utf-8") as fichier_config:
+    config = json.load(fichier_config)
+
+tickers_a_comparer = config["tickers_a_comparer"]
+montant_mensuel = config["montant_mensuel"]
+periode = config["periode"]
 
 resultats = comparer_tickers(tickers_a_comparer, montant_mensuel, periode)
 
@@ -93,7 +96,6 @@ for resultat in resultats:
 
 print()
 
-# Comparaison DCA vs investissement unique, sur le premier ticker de la liste
 ticker_reference = tickers_a_comparer[0]
 montant_total_equivalent = montant_mensuel * len(resultats[0]["historique_valeur"])
 

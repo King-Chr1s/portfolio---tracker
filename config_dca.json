@@ -1,0 +1,5 @@
+{
+    "tickers_a_comparer": ["MSFT", "GOOGL", "NOW"],
+    "montant_mensuel": 100,
+    "periode": "2y"
+}
