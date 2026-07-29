@@ -52,6 +52,54 @@ def exporter_csv(portefeuille):
     portefeuille.to_csv(nom_fichier, index=False)
     return nom_fichier
 
+def generer_html(portefeuille, valeur_totale, repartition):
+    """Génère une page HTML affichant les résultats du tracker."""
+
+    def couleur_performance(valeur):
+        couleur = "green" if valeur >= 0 else "red"
+        return f'<span style="color:{couleur}">{valeur}%</span>'
+
+    tableau_html = portefeuille[["ticker", "nom", "compte", "valeur_ligne", "performance_pct", "plus_moins_value_eur"]].copy()
+    tableau_html["performance_pct"] = tableau_html["performance_pct"].apply(couleur_performance)
+
+    lignes_html = tableau_html.to_html(escape=False, index=False)
+    date_generation = datetime.now().strftime("%d/%m/%Y à %Hh%M")
+
+    contenu_html = f"""
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <title>Portfolio Tracker</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; margin: 40px; background-color: #f5f5f5; }}
+            h1 {{ color: #222; }}
+            table {{ border-collapse: collapse; width: 100%; background: white; }}
+            th, td {{ border: 1px solid #ddd; padding: 8px 12px; text-align: right; }}
+            th {{ background-color: #333; color: white; text-align: center; }}
+            td:first-child, td:nth-child(2), td:nth-child(3) {{ text-align: left; }}
+            .resume {{ margin-top: 20px; font-size: 1.1em; }}
+        </style>
+    </head>
+    <body>
+        <h1>Portfolio Tracker</h1>
+        <p>Dernière mise à jour : {date_generation}</p>
+
+        {lignes_html}
+
+        <div class="resume">
+            <p><strong>Valeur totale du portefeuille :</strong> {round(valeur_totale, 2)} €</p>
+            <p><strong>CTO :</strong> {round(repartition.get('CTO', 0), 2)} €</p>
+            <p><strong>PEA :</strong> {round(repartition.get('PEA', 0), 2)} €</p>
+        </div>
+    </body>
+    </html>
+    """
+
+    with open("rapport.html", "w", encoding="utf-8") as fichier:
+        fichier.write(contenu_html)
+
+    print("Page HTML générée : rapport.html")
 
 # --- Programme principal ---
 
@@ -81,6 +129,8 @@ print("Valeur totale du portefeuille :", round(valeur_totale, 2), "€")
 repartition = portefeuille.groupby("compte")["valeur_ligne"].sum()
 print()
 print(repartition)
+
+generer_html(portefeuille, valeur_totale, repartition)
 
 nom_export = exporter_csv(portefeuille)
 print()
